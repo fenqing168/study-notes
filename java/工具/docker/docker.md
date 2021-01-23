@@ -21,7 +21,8 @@
 2. 镜像，用镜像可以创建出一个或者多个容器，可以认为是一个模板，类似java的类，用类可以创建出对象，比如windows10的安装文件，利用这一个文件可以给无数个电脑安装windows
 3. 容器，利用镜像创建出来的真实运行环境，他是一个虚拟出的一个小型的linux，也是最终运行应用程序的东西
 ## 2.docker常用命令
-### docker info
+### docker 系统相关
+#### docker info
 docker info 可以查看docker的详细信息，包括镜像数，容器数，主机硬件信息等
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z docker]# docker info
@@ -72,7 +73,7 @@ Registry Mirrors:
 Live Restore Enabled: false
 Registries: docker.io (secure)
 ```
-### docker version
+#### docker version
 docker version 可以查看docker服务端和客户端版本信息
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z docker]# docker version
@@ -95,7 +96,8 @@ Server:
  OS/Arch:         linux/amd64
  Experimental:    false
 ```
-### docker images
+### docker 镜像相关
+#### docker images
 docker images 可以查看本地的镜像
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z docker]# docker images
@@ -168,7 +170,7 @@ docker.io/hello-world          latest              sha256:bf756fb1ae65adf866bd8c
 docker.io/kibana               7.4.2               sha256:230d3ded1abc1468536e41d80a9cc6a67908358c0e4ebf065c29b8ef0370ba4b   15 months ago       1.1 GB
 docker.io/nginx                1.10                sha256:0346349a1a640da9535acfc0f68be9d9b81e85957725ecb76f3b522f4e2f0455   3 years ago         182 MB
 ```
-### docker search 
+#### docker search 
 docker search 镜像名字， 可以去中央仓库搜索镜像，对应的网站地址[docker镜像仓库](https://registry.hub.docker.com/search?type=image)
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z ~]# docker search tomcat
@@ -229,7 +231,7 @@ INDEX       NAME                       DESCRIPTION                              
 docker.io   docker.io/dordoka/tomcat   Ubuntu 14.04, Oracle JDK 8 and Tomcat 8 based docker container.   55                   [OK]
 docker.io   docker.io/bitnami/tomcat   Bitnami Tomcat Docker Image                                       37                   [OK]
 ```
-### docker pull
+#### docker pull
 docker pull 镜像名[:tag] 从中央仓库拉取镜像，如果不写tag，等价于docker pull 镜像名:latest
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z ~]# docker pull tomcat
@@ -249,7 +251,7 @@ c547db74f1e1: Pull complete
 Digest: sha256:94cc18203335e400dbafcd0633f33c53663b1c1012a13bcad58cced9cd9d1305
 Status: Downloaded newer image for docker.io/tomcat:latest
 ```
-### docker pull
+#### docker rmi
 docker rmi 镜像名:tag,没写tag默认是latest，删除某个镜像
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z ~]# docker rmi hello-world
@@ -285,8 +287,9 @@ Deleted: sha256:19f2a825ed46bbf16a06d9d5185a0ac68196217f302e760abb4cbc3178b14cc1
 Deleted: sha256:b4f0436e967b6b9b021d3ed900a5422da6d8fe8c17c51c7d7e4f9c105812f868
 Deleted: sha256:4762552ad7d851a9901571428078281985074e5ddb806979dd7ad24748db4ca0
 ```
-> docker rmi -f ${docker ps -qa} ${}可以用命令的结果做占位
-### docker run
+> docker rmi -f $(docker ps -qa) ${}可以用命令的结果做占位
+### docker 容器相关
+#### docker run
 docker run 命令可以创建并启动一个容器 参数格式为 docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
 > options说明 
   1. --name 容器新名字 为容器指定一个名称
@@ -305,7 +308,7 @@ docker run 命令可以创建并启动一个容器 参数格式为 docker run [O
 [root@32c23775d2b1 /]# pwd
 /
 ```
-### docker ps [OPTIONS]
+#### docker ps [OPTIONS]
 docker ps 查看现有的容器
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z ~]# docker ps
@@ -360,6 +363,45 @@ d335af0a7119        nginx:1.10            "nginx -g 'daemon ..."   2 months ago 
     8d37715ca8a8
    ```
 5. --no-trunc 不截断输出
-### 推出容器的两种方式
-1. exit 容器停止退出
-2. ctrl+P+Q 容器不停止退出
+#### 退出容器的两种方式
+1. exit 容器停止退出,在容器终端内输入该命令退出
+2. ctrl+P+Q 容器不停止退出，在容器终端内输入按下组合键退出
+#### docker start
+docker start 容器id或者容器名，可以启动容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker start mycentos01
+mycentos01
+```
+#### docker restart
+docker restart 容器id或者容器名,可以重启容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker restart mycentos02
+mycentos02
+```
+#### docker stop 
+docker stop 容器id或者容器名，可以停止容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker stop mycentos02
+mycentos02
+```
+#### docker kill 
+docker kill 容器id或者容器名，强制停止容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker kill mycentos01
+mycentos01
+```
+#### docker rm
+docker rm 删除已停止的容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker rm mycentos01
+mycentos01
+```
+> options 说明
+1. -f 强制删除容器，会执行先停止再删除流程
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker rm -f  mycentos02
+mycentos02
+```
+2. 一次性删除多个容器
+  1. docker rm -f $(docker ps -a -q) 删除所有容器，将$()内的命令结果当做参数,属于shell语法
+  2. docker ps -a -q | xargs docker rm 删除所有容器，将前者命令的结果当做参数给到后者命令
