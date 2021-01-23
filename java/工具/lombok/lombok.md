@@ -311,4 +311,72 @@ public @interface ToString {
 	}
 }
 ```
-首先可以看出该注解只能用在类上
+首先可以看出该注解只能用在类上，看看效果
+```java
+// 不用@ToString
+class A {
+    private Integer id = 1;
+}
+public static void main(String[] args) {
+    A a = new A();
+    System.out.println(a);
+}
+//执行结果
+com.fenqing168.lombok.val.A@1b6d3586
+```
+```java
+// 使用@ToString
+@ToString
+class A {
+    private Integer id = 1;
+}
+public static void main(String[] args) {
+    A a = new A();
+    System.out.println(a);
+}
+//执行结果
+A(id=1)
+```
+首先要知道System.out.println方法在底层会调用对象的toString方法
+```java
+public void println(Object x) {
+    String s = String.valueOf(x);
+    synchronized (this) {
+        print(s);
+        newLine();
+    }
+}
+public static String valueOf(Object obj) {
+    return (obj == null) ? "null" : obj.toString();
+}
+```
+而对象的toString都是继承于Object类
+```java
+public String toString() {
+    return getClass().getName() + "@" + Integer.toHexString(hashCode());
+}
+```
+所以在重写toString方法的情况下，就是上述第一种结果，类名加hashcode，希望toString为自定义的结果就需要重写
+而@ToString注解就是帮忙重写toString,将所有字段拼接成字符串,反编译结果
+```java
+class A {
+    private Integer id = 1;
+
+    A() {
+    }
+
+    public String toString() {
+        return "A(id=" + this.id + ")";
+    }
+}
+```
+注解中还有许多参数
+
+| 属性                  | 描述                                                                       |
+| -------------------- | -------------------------------------------------------------------------- |
+| includeFieldNames     | 该属性设置为 false 表示输出没有属性名和等号，只有属性值，多个属性值用逗号隔开。    |
+| exclude               | 该属性中列出的字段都不会在出现在生成的 toString 方法中，与 of 属性互斥。         |
+| of                    | 该属性中列出的字段是要打印的字段，与 exclude 属性互斥。                         |
+| callSuper             | 该属性设置为 true，表示输出中会包含父类的 toString 方法的输出结果，默认为 false。 |
+| doNotUseGetters       | 通常都是通过字段的 getter 方法获取字段值，如果没有 getter 方法，才在通过直接访问字段来获取值。该属性设置为 true，表示输出的字段值不通过 getter 方法获取，而是直接访问字段，默认为 false。 |
+| onlyExplicitlyIncluded | 该属性设置为 true，不输出任何字段信息，只输出了构造方法的名字，默认为 false。 |
