@@ -231,3 +231,135 @@ docker.io   docker.io/bitnami/tomcat   Bitnami Tomcat Docker Image              
 ```
 ### docker pull
 docker pull 镜像名[:tag] 从中央仓库拉取镜像，如果不写tag，等价于docker pull 镜像名:latest
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker pull tomcat
+Using default tag: latest
+Trying to pull repository docker.io/library/tomcat ... 
+latest: Pulling from docker.io/library/tomcat
+b9a857cbf04d: Pull complete 
+d557ee20540b: Pull complete 
+3b9ca4f00c2e: Pull complete 
+667fd949ed93: Pull complete 
+661d3b55f657: Pull complete 
+511ef4338a0b: Pull complete 
+a56db448fefe: Pull complete 
+00612a99c7dc: Pull complete 
+326f9601c512: Pull complete 
+c547db74f1e1: Pull complete 
+Digest: sha256:94cc18203335e400dbafcd0633f33c53663b1c1012a13bcad58cced9cd9d1305
+Status: Downloaded newer image for docker.io/tomcat:latest
+```
+### docker pull
+docker rmi 镜像名:tag,没写tag默认是latest，删除某个镜像
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker rmi hello-world
+Untagged: hello-world:latest
+Untagged: docker.io/hello-world@sha256:31b9c7d48790f0d8c50ab433d9c3b7e17666d6993084c002c2ff1ca09b96391d
+Deleted: sha256:bf756fb1ae65adf866bd8c456593cd24beb6a0a061dedf42b26a993176745f6b
+Deleted: sha256:9c27e219663c25e0f28493790cc0b88bc973ba3b1686355f221c38a36978ac63
+```
+> -f 强制删除，如果有容器依赖镜像则需要强制删除
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker rmi -f hello-world
+Untagged: hello-world:latest
+Untagged: docker.io/hello-world@sha256:31b9c7d48790f0d8c50ab433d9c3b7e17666d6993084c002c2ff1ca09b96391d
+Deleted: sha256:bf756fb1ae65adf866bd8c456593cd24beb6a0a061dedf42b26a993176745f6b
+```
+> 可以批量删除，镜像后面加空格继续追加即可
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker rmi -f hello-world tomcat
+Untagged: hello-world:latest
+Untagged: docker.io/hello-world@sha256:31b9c7d48790f0d8c50ab433d9c3b7e17666d6993084c002c2ff1ca09b96391d
+Deleted: sha256:bf756fb1ae65adf866bd8c456593cd24beb6a0a061dedf42b26a993176745f6b
+Untagged: tomcat:latest
+Untagged: docker.io/tomcat@sha256:94cc18203335e400dbafcd0633f33c53663b1c1012a13bcad58cced9cd9d1305
+Deleted: sha256:040bdb29ab375db2a8de090070dcbee19d43f609385a934c3f2b423e515f57bb
+Deleted: sha256:03ac467e286d36301dba7daaec530f481074197d22d41bd48a32e5a2e3069573
+Deleted: sha256:c56c3d4e36aac2060fdb29c95baf4b4d6916fe9a454751b77b8d89f27dd8dda4
+Deleted: sha256:0f3911a87064866cd2aa7fd863afc1e02bdfa4856afa351e871f0e6a48cfd52b
+Deleted: sha256:7891c5716382337382836e0af1ea998bf77c1eed9c8e806c7aac5f489952f4ba
+Deleted: sha256:56dee2fc4110951264d4b134b303920c633aabbbb0264dc218518b3547320de2
+Deleted: sha256:cd253bbc5a1ce457359958f4905b53a3f6f0ac167ba5065f68385600fdbae99e
+Deleted: sha256:03b0292dbc6978fe1077f948ac07472a8cac23fb4c3cf92c76f5eb62891e3d5a
+Deleted: sha256:19f2a825ed46bbf16a06d9d5185a0ac68196217f302e760abb4cbc3178b14cc1
+Deleted: sha256:b4f0436e967b6b9b021d3ed900a5422da6d8fe8c17c51c7d7e4f9c105812f868
+Deleted: sha256:4762552ad7d851a9901571428078281985074e5ddb806979dd7ad24748db4ca0
+```
+> docker rmi -f ${docker ps -qa} ${}可以用命令的结果做占位
+### docker run
+docker run 命令可以创建并启动一个容器 参数格式为 docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+> options说明 
+  1. --name 容器新名字 为容器指定一个名称
+  2. -d 后台运行容器，并返回容器ID，也即启动守护式容器
+  3. -i 以交互模式运行容器，通常与-t 同时使用
+  4. -t 为容器重新分配一个伪输入终端，通常与-i 同时使用
+  5. -P 随机端口映射
+  6. -p 指定端口映射，有以下四种模式
+        1. ip:hostPort:containerPort
+        2. ip:containerPort
+        3. hostPort:containerPort
+        4. containerPort
+> -i和-t 组合使用，运行并且启动虚拟终端
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -it --name mycentos01 centos
+[root@32c23775d2b1 /]# pwd
+/
+```
+### docker ps [OPTIONS]
+docker ps 查看现有的容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker ps
+CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS              PORTS                                            NAMES
+32c23775d2b1        centos                "/bin/bash"              27 minutes ago      Up 27 minutes                                                        mycentos01
+8b2481b4ac48        redis                 "docker-entrypoint..."   6 weeks ago         Up 2 weeks          0.0.0.0:6379->6379/tcp                           redis
+d335af0a7119        nginx:1.10            "nginx -g 'daemon ..."   2 months ago        Up 3 weeks          0.0.0.0:80->80/tcp, 443/tcp                      nginx
+253d60c0e3be        kibana:7.4.2          "/usr/local/bin/du..."   2 months ago        Up 2 weeks          0.0.0.0:5601->5601/tcp                           kibana
+9ab079d39b8d        elasticsearch:7.9.3   "/tini -- /usr/loc..."   2 months ago        Up 3 weeks          0.0.0.0:9200->9200/tcp, 0.0.0.0:9300->9300/tcp   elasticsearch
+6aa3c6d07701        nacos/nacos-server    "bin/docker-startu..."   2 months ago        Up 3 weeks          0.0.0.0:8848->8848/tcp                           nacos
+8d37715ca8a8        mysql:5.7.32          "docker-entrypoint..."   2 months ago        Up 3 weeks          0.0.0.0:3306->3306/tcp, 33060/tcp                mysql
+```
+> OPTIONS 说明
+1. -a 列出当前所有正在运行的容器+历史上运行过的
+   ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z ~]# docker ps -a
+    CONTAINER ID        IMAGE                 COMMAND                  CREATED             STATUS                         PORTS                                            NAMES
+    32c23775d2b1        centos                "/bin/bash"              35 minutes ago      Up 35 minutes                                                                   mycentos01
+    af3b17c82193        bf756fb1ae65          "/hello"                 About an hour ago   Exited (0) About an hour ago                                                    sad_euler
+    8b2481b4ac48        redis                 "docker-entrypoint..."   6 weeks ago         Up 2 weeks                     0.0.0.0:6379->6379/tcp                           redis
+    abaece61dd15        wordpress             "docker-entrypoint..."   8 weeks ago         Exited (0) 3 weeks ago                                                          wordpress
+    d335af0a7119        nginx:1.10            "nginx -g 'daemon ..."   2 months ago        Up 3 weeks                     0.0.0.0:80->80/tcp, 443/tcp                      nginx
+    253d60c0e3be        kibana:7.4.2          "/usr/local/bin/du..."   2 months ago        Up 2 weeks                     0.0.0.0:5601->5601/tcp                           kibana
+    9ab079d39b8d        elasticsearch:7.9.3   "/tini -- /usr/loc..."   2 months ago        Up 3 weeks                     0.0.0.0:9200->9200/tcp, 0.0.0.0:9300->9300/tcp   elasticsearch
+    6aa3c6d07701        nacos/nacos-server    "bin/docker-startu..."   2 months ago        Up 3 weeks                     0.0.0.0:8848->8848/tcp                           nacos
+    8d37715ca8a8        mysql:5.7.32          "docker-entrypoint..."   2 months ago        Up 3 weeks                     0.0.0.0:3306->3306/tcp, 33060/tcp                mysql
+   ```
+2. -l 显示最近创建的容器
+   ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z ~]# docker ps -l
+    CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                      PORTS               NAMES
+    32c23775d2b1        centos              "/bin/bash"         38 minutes ago      Exited (0) 11 seconds ago                       mycentos01
+   ```
+3. -n 显示最近n个创建的容器
+   ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z ~]# docker ps -n 5
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                         PORTS                         NAMES
+    32c23775d2b1        centos              "/bin/bash"              39 minutes ago      Exited (0) 50 seconds ago                                    mycentos01
+    af3b17c82193        bf756fb1ae65        "/hello"                 About an hour ago   Exited (0) About an hour ago                                 sad_euler
+    8b2481b4ac48        redis               "docker-entrypoint..."   6 weeks ago         Up 2 weeks                     0.0.0.0:6379->6379/tcp        redis
+    abaece61dd15        wordpress           "docker-entrypoint..."   8 weeks ago         Exited (0) 3 weeks ago                                       wordpress
+    d335af0a7119        nginx:1.10          "nginx -g 'daemon ..."   2 months ago        Up 3 weeks                     0.0.0.0:80->80/tcp, 443/tcp   nginx
+   ```
+4. -q 静默模式，只显示容器编号
+   ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z ~]# docker ps -q
+    8b2481b4ac48
+    d335af0a7119
+    253d60c0e3be
+    9ab079d39b8d
+    6aa3c6d07701
+    8d37715ca8a8
+   ```
+5. --no-trunc 不截断输出
+### 推出容器的两种方式
+1. exit 容器停止退出
+2. ctrl+P+Q 容器不停止退出
