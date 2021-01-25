@@ -306,7 +306,17 @@ docker run 命令可以创建并启动一个容器 参数格式为 docker run [O
 ```shell
 [root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -it --name mycentos01 centos
 [root@32c23775d2b1 /]# pwd
-/
+```
+> -d 守护式进程启动
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -d centos
+c27c084e44bb8a2d8b23ce62e9e93d3888ff74f909178724b2e101133914bd7b
+```
+然后docker ps -a 查看发现容器已经退出，原因是docker容器后台运行，就必须有一个前台进程，容器运行的命令如果不是那些一直挂起的命令，就会自动退出
+可以使用在容器里执行一个死循环来模拟centos容器不停止
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -d centos /bin/sh -c "while true; do echo hello fenqing; sleep 2; done"
+f3e5471f302fbf5e9e104146ad9d0b708015a5a22ad984337c265b7ca1ff6c10
 ```
 #### docker ps [OPTIONS]
 docker ps 查看现有的容器
@@ -405,3 +415,41 @@ mycentos02
 2. 一次性删除多个容器
   1. docker rm -f $(docker ps -a -q) 删除所有容器，将$()内的命令结果当做参数,属于shell语法
   2. docker ps -a -q | xargs docker rm 删除所有容器，将前者命令的结果当做参数给到后者命令
+#### docker logs 
+docker logs 查询容器的日志
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker logs f3e
+hello fenqing
+hello fenqing
+hello fenqing
+```
+options说明
+> -t 及收入时间戳
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker logs -t f3e
+2021-01-25T02:06:24.337771000Z hello fenqing
+2021-01-25T02:06:26.346211000Z hello fenqing
+2021-01-25T02:06:28.348766000Z hello fenqing
+```
+> -f 跟随最新日志打印
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker logs -f f3e
+hello fenqing
+hello fenqing
+hello fenqing
+```
+> --tall 数字显示最后多少条
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker logs --tail 1 f3e
+hello fenqing
+```
+#### docker top
+docker top 查看docker容器内进程
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker top f3e
+UID                 PID                 PPID                C                   STIME               TTY                 TIME                CMD
+root                31088               31070               0                   10:06               ?                   00:00:00            /bin/sh -c while true; do echo hello fenqing; sleep 2; done
+root                31394               31088               0                   10:12               ?                   00:00:00            /usr/bin/coreutils --coreutils-prog-shebang=sleep /usr/bin/sleep 2
+```
+#### docker inspect
+docker inspect 容器id 查看容器内部细节

@@ -380,3 +380,58 @@ class A {
 | callSuper             | 该属性设置为 true，表示输出中会包含父类的 toString 方法的输出结果，默认为 false。 |
 | doNotUseGetters       | 通常都是通过字段的 getter 方法获取字段值，如果没有 getter 方法，才在通过直接访问字段来获取值。该属性设置为 true，表示输出的字段值不通过 getter 方法获取，而是直接访问字段，默认为 false。 |
 | onlyExplicitlyIncluded | 该属性设置为 true，不输出任何字段信息，只输出了构造方法的名字，默认为 false。 |
+### 6.@EqualsAndHashCode
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.SOURCE)
+public @interface EqualsAndHashCode {
+	String[] exclude() default {};
+	
+	String[] of() default {};
+	
+	boolean callSuper() default false;
+	
+	boolean doNotUseGetters() default false;
+
+	CacheStrategy cacheStrategy() default CacheStrategy.NEVER;
+	
+	AnyAnnotation[] onParam() default {};
+	
+	@Deprecated
+	@Retention(RetentionPolicy.SOURCE)
+	@Target({})
+	@interface AnyAnnotation {}
+	
+	boolean onlyExplicitlyIncluded() default false;
+	
+	@Target(ElementType.FIELD)
+	@Retention(RetentionPolicy.SOURCE)
+	public @interface Exclude {}
+	
+	@Target({ElementType.FIELD, ElementType.METHOD})
+	@Retention(RetentionPolicy.SOURCE)
+	public @interface Include {
+		String replaces() default "";
+		int rank() default 0;
+	}
+
+	public enum CacheStrategy {
+		NEVER,
+		LAZY
+	}
+}
+```
+从源代码中看出，注解只能用在 ElementType.TYPE， 也就是类上
+他的作用就是会帮助生成出重写equals和hashcode方法的代码
+equals和hashcode默认会结合类的属性来实现
+1. 可通过参数exclude排除一些属性
+2. 可通过参数of指定仅使用哪些属性
+3. callSuper可以指定是否结合父类的equals和hashcode的结果作为实现的一部分，默认为false
+4. doNotUseGetters在生成代码的时候，如果需要用到属性，而正好有get方法，
+   则默认调用get方法，doNotUseGetters设置为true，则会直接引用属性，不会调用get方法
+5. cacheStrategy是一个枚举类型，作用为是否缓存hashcode的结果，默认为不缓存CacheStrategy.LAZY则可以设置为缓存，
+   如果字段会发生改变，则千万不要使用这个
+6. onParam 与上述某些注解一样，在生成的方法上添加某些注解
+7. onlyExplicitlyIncluded，设置不自动引用属性来实现
+8. Exclude子注解，用在属性上，用于排除字段参与到方法的实现,一般在onlyExplicitlyIncluded=false的时候使用
+9. Include子注解，用在属性上，用于加入字段参与到方法的实现,一般在onlyExplicitlyIncluded=true的时候使用
