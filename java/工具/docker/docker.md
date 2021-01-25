@@ -639,3 +639,76 @@ docker inspect 容器id 查看容器内部细节
     }
 ]
 ```
+#### docker attach 
+docker attach 容器id，可以进入到容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker attach c9e
+[root@c9ea3f54cea7 /]# ls
+bin  dev  etc  home  lib  lib64  lost+found  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+```
+#### docker exec
+docker exec 可以执行容器内某种脚本
+即可以在主机命令行直接执行脚本，如果运行bin/bash则进入容器
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker exec -t c9e ls -l /tmp
+total 8
+-rwx------ 1 root root 701 Dec  4 17:37 ks-script-esd4my7v
+-rwx------ 1 root root 671 Dec  4 17:37 ks-script-eusq_sc5
+```
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker exec -t c9e /bin/bash
+[root@c9ea3f54cea7 /]# 
+```
+#### docker cp
+docker cp 容器id:容器内路径 目的主机路径 ，可以复制文件
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker cp c9e:/opt/application.yml ~
+[root@iZwz9g1c3fleilt56ermd5Z ~]# ls
+application.yml  elasticsearch-analysis-ik-7.9.3.zip
+```
+### 小结
+> push 推送制定镜像或者库镜像至docker源服务器
+
+> restart 重启运行的容器
+
+> rm 删除一个或者多个容器
+
+> rmi 删除一个或者多个镜像[无容器使用的镜像才可删除，否则需要删除相关容器才可以继续，或者-f强制删]
+
+> run 创建一个新的容器并运行一个命令
+
+> save 保存一个镜像为一个tar包
+
+> search 在docker hub中搜索镜像
+
+> start 启动容器
+
+> stop 停止容器
+
+> tag 给源中镜像打上标签
+
+> top 查看容器中运行的进程信息
+
+> unpause 取消暂停容器
+
+> version 查看docker版本号
+
+> wait 截取容器停止时的退出状态值
+
+### docker 镜像高级
+镜像是一种轻量级，可执行的独立软件包，用来打包软件运行环境和基于运行环境开发的软件，他包含运行某个软件所需的所有内容，包括代码，运行时，库，环境变量，和配置文件
+> UnionFS 联合文件系统 
+
+UnionFS 是一种分层，轻量级，并且搞性能的文件系统，对文件系统的修改最稳一次提交来一层层的叠加
+特性：一次同事加载多个文件系统，但是总体看来，只能看到一个文件系统，联合加载或吧各层文件系统叠加起来，最终的文件系统会包含所有底层文件和目录
+
+> docker 镜像加载原理
+
+docker的镜像实际上有一层一层的文件系统组成，这种层级的文件系统UnionFS，
+
+bootfs，主要包含bootloader和kernel，botloader主要是引导加载kernel，Linux启动时会加载bootfs文件系统，在docker镜像最底层是bootfs，这一层与Linux/Unix系统是一样的
+
+rootfs 在bootfs之上，包含最经典的/dev /proc /bin /etc 等标准目录，和文件，rootfs就是各种不同的操作系统发行版
+
+为什么Centos的镜像是4G,docker的镜像只有200M
+对于一个精简的OS，rootfs可以很小，只需要包括最基本的命令，工具，程序库，就可以，因为底层直接使用主机的kernel,自己只需要提供rootfs即可，由于可见对于不同的linux发行版，bootfs基本是一致的，rootfs会有差别，英雌不同的发行版可以共用bootfs
