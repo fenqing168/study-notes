@@ -712,3 +712,37 @@ rootfs 在bootfs之上，包含最经典的/dev /proc /bin /etc 等标准目录�
 
 为什么Centos的镜像是4G,docker的镜像只有200M
 对于一个精简的OS，rootfs可以很小，只需要包括最基本的命令，工具，程序库，就可以，因为底层直接使用主机的kernel,自己只需要提供rootfs即可，由于可见对于不同的linux发行版，bootfs基本是一致的，rootfs会有差别，英雌不同的发行版可以共用bootfs
+
+### docker commit
+docker commit 提交容器副本，形成新的镜像
+demo:
+1. 拉取tomcat
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker pull tomcat
+Using default tag: latest
+Trying to pull repository docker.io/library/tomcat ... 
+latest: Pulling from docker.io/library/tomcat
+b9a857cbf04d: Pull complete 
+d557ee20540b: Pull complete 
+3b9ca4f00c2e: Pull complete 
+667fd949ed93: Pull complete 
+661d3b55f657: Pull complete 
+511ef4338a0b: Pull complete 
+a56db448fefe: Pull complete 
+00612a99c7dc: Pull complete 
+326f9601c512: Pull complete 
+c547db74f1e1: Pull complete 
+Digest: sha256:94cc18203335e400dbafcd0633f33c53663b1c1012a13bcad58cced9cd9d1305
+Status: Downloaded newer image for docker.io/tomcat:latest
+```
+2.运行tomcat
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -it -p 8888:8080 tomcat
+Using CATALINA_BASE:   /usr/local/tomcat
+Using CATALINA_HOME:   /usr/local/tomcat
+Using CATALINA_TMPDIR: /usr/local/tomcat/temp
+Using JRE_HOME:        /usr/local/openjdk-11
+Using CLASSPATH:       /usr/local/tomcat/bin/bootstrap.jar:/usr/local/tomcat/bin/tomcat-juli.jar
+Using CATALINA_OPTS:   
+NOTE: Picked up JDK_JAVA_OPTIONS:  --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED
+```

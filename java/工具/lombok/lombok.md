@@ -437,6 +437,9 @@ equals和hashcode默认会结合类的属性来实现
 9. Include子注解，用在属性上，用于加入字段参与到方法的实现,一般在onlyExplicitlyIncluded=true的时候使用
 ### @NoArgsConstructor，@RequiredArgsConstructor，@AllArgsConstructor
 三个注解都为生成构造器
+
 @NoArgsConstructor则是生成无参构造器
+
 @RequiredArgsConstructor会生成只带有类里的final属性和@NonNull注解修饰的有参构造器
+
 @AllArgsConstructor 会生成全部属性的有参构造器
