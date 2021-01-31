@@ -294,12 +294,20 @@ docker run 命令可以创建并启动一个容器 参数格式为 docker run [O
 > options说明 
   1. --name 容器新名字 为容器指定一个名称
   2. -d 后台运行容器，并返回容器ID，也即启动守护式容器
+     ```shell
+     [root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -d -p 8889:8080 fenqing/tomcat02:1.2
+     f6cca3295b968776b63f1ee5733f230bdb22a73527159f12663d79485a13186b
+     ```
   3. -i 以交互模式运行容器，通常与-t 同时使用
   4. -t 为容器重新分配一个伪输入终端，通常与-i 同时使用
   5. -P 随机端口映射
   6. -p 指定端口映射，有以下四种模式
         1. ip:hostPort:containerPort
         2. ip:containerPort
+            ```shell
+            [root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -d -p 8889:8080 fenqing/tomcat02:1.2
+            f6cca3295b968776b63f1ee5733f230bdb22a73527159f12663d79485a13186b
+            ```
         3. hostPort:containerPort
         4. containerPort
 > -i和-t 组合使用，运行并且启动虚拟终端
@@ -711,4 +719,127 @@ bootfs，主要包含bootloader和kernel，botloader主要是引导加载kernel�
 rootfs 在bootfs之上，包含最经典的/dev /proc /bin /etc 等标准目录，和文件，rootfs就是各种不同的操作系统发行版
 
 为什么Centos的镜像是4G,docker的镜像只有200M
-对于一个精简的OS，rootfs可以很小，只需要包括最基本的命令，工具，程序库，就可以，因为底层直接使用主机的kernel,自己只需要提供rootfs即可，由于可见对于不同的linux发行版，bootfs基本是一致的，rootfs会有差别，英雌不同的发行版可以共用bootfs
+对于一个精简的OS，rootfs可以很小，只需要包括最基本的命令，工具，程序库，
+就可以，因为底层直接使用主机的kernel,自己只需要提供rootfs即可，由于可见对于不同的linux发行版，
+bootfs基本是一致的，rootfs会有差别，英雌不同的发行版可以共用bootfs
+
+#### docker commit 
+docker commit 提交容器使之成为新的镜像
+```shell
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker commit -a "fenqing" -m "tomcat 自己定制" 7468 fenqing/tomcat02:1.2
+sha256:fb29bf1e4ca81529fc1300b2bd688b8fdff45a970f1661bb8736d235642b5785
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker images
+REPOSITORY                     TAG                 IMAGE ID            CREATED             SIZE
+fenqing/tomcat02               1.2                 fb29bf1e4ca8        9 seconds ago       649 MB
+docker.io/tomcat               latest              040bdb29ab37        2 weeks ago         649 MB
+docker.io/centos               latest              300e315adb2f        7 weeks ago         209 MB
+docker.io/wordpress            latest              cfb931188dab        2 months ago        546 MB
+docker.io/redis                latest              74d107221092        2 months ago        104 MB
+docker.io/mysql                5.7.32              1b12f2e9257b        3 months ago        448 MB
+docker.io/elasticsearch        7.9.3               1ab13f928dc8        3 months ago        742 MB
+docker.io/nacos/nacos-server   latest              a81222848024        4 months ago        921 MB
+docker.io/kibana               7.4.2               230d3ded1abc        15 months ago       1.1 GB
+docker.io/nginx                1.10                0346349a1a64        3 years ago         182 MB
+```
+> -a "作者名称" 指定作者名称
+
+> -m "描述信息" 指定描述信息
+
+### 容器数据卷
+1. 是什么
+    > 将运用与运行的环境打包成容器运行，运行可以伴随容器，但是我们队数据的要求希望是持久化的
+    
+    > 容器之间希望有可能共享数据
+    
+    > docker 容器产生的数据，如果不通过docker commit生成新的镜像，是的数据作为镜像的一部分保存下来，那么当容器删除后，数据自然就没有了.
+    
+    > 为了能保存数据在docker中我们使用卷
+
+2. 能干嘛
+   > 卷就是目录或文件，存在于一个或者多个容器中，由docker挂在到容器，但不属于联合文件系统，因此
+   > 能够绕开Union File System提供一些用于持续存储或者共享数据的特性
+   
+   特点
+   > 数据卷可在容器之间共享或重用数据
+   
+   > 卷中的更改可以直接生效
+   
+   > 数据卷中更改不会包含在镜像的更新中
+   
+   > 数据卷的生命周期一直持续到没有容器使用它为止
+   
+3. 如何使用
+   > 直接命令添加
+   1. docker run命令的-v参数，主机目录:容器内目录
+    ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z docker-study]# docker run -it -v /opt/fenqingData/docker-study/centos1DataVolume:/dataVolumeContainer centos
+    [root@129c34b93fa0 /]#
+    ```
+   主机
+   ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z ~]# cd /opt/fenqingData/docker-study/
+    [root@iZwz9g1c3fleilt56ermd5Z docker-study]# ls
+    centos1DataVolume  tomcat
+    ```
+   容器内
+   ```shell
+    [root@129c34b93fa0 /]# ls
+    bin  dataVolumeContainer  dev  etc  home  lib  lib64  lost+found  media  mnt  opt  proc  root  run  sbin  srv  sys  tmp  usr  var
+   ```
+   查看数据卷是否挂载成功 可以使用上面提到的inspect命令，查看到HostConfig->Binds
+
+   容器内与主机数据共享
+   主机写，容器读
+   ```shell
+    # 主机
+    [root@iZwz9g1c3fleilt56ermd5Z centos1DataVolume]# echo local -> local.txt
+    [root@iZwz9g1c3fleilt56ermd5Z centos1DataVolume]# ls
+    local.txt  out.log
+    # 容器内
+    [root@129c34b93fa0 dataVolumeContainer]# ls 
+    local.txt  out.log
+   ```
+   容器写，主机读
+   ```shell
+    # 容器内
+    [root@129c34b93fa0 dataVolumeContainer]# echo container -> container.txt
+    [root@129c34b93fa0 dataVolumeContainer]# ls
+    container.txt  local.txt  out.log
+    # 主机
+    [root@iZwz9g1c3fleilt56ermd5Z centos1DataVolume]# ls
+    container.txt  local.txt  out.log
+   ```
+   容器退出后是否仍然能保持一致
+   ```shell
+    # 容器退出的情况下，在主机将要挂载卷宗的目录下创建文件
+    [root@iZwz9g1c3fleilt56ermd5Z centos1DataVolume]# echo local -> local1.txt
+    [root@iZwz9g1c3fleilt56ermd5Z centos1DataVolume]# ls
+    container.txt  local1.txt  local.txt  out.log
+    # 启动容器，查看
+    [root@iZwz9g1c3fleilt56ermd5Z docker-study]# docker start 129
+    [root@iZwz9g1c3fleilt56ermd5Z docker-study]# docker attach 129
+    [root@129c34b93fa0 /]# cd dataVolumeContainer/
+    [root@129c34b93fa0 dataVolumeContainer]# ls
+    container.txt  local.txt  local1.txt  out.log
+    [root@129c34b93fa0 dataVolumeContainer]#
+   ```
+   带权限的命令 docker run 的 -v 命令 主机目录:容器内目录:ro 镜像名，指定只读
+   ```shell
+    [root@iZwz9g1c3fleilt56ermd5Z docker-study]# docker run -it -v /opt/fenqingData/docker-study/centos1DataVolume:/dataVolumeContainer:ro centos
+    [root@46b6e0b7c873 /]#
+    # 但是容器内没有写权限，ro对应单词则是Read-only
+    [root@46b6e0b7c873 dataVolumeContainer]# echo hello -> container1.txt 
+    bash: container1.txt: Read-only file system
+    # inspect 命令查看。得到一个数据描述
+   "Mounts": [
+        {
+            "Type": "bind",
+            "Source": "/opt/fenqingData/docker-study/centos1DataVolume",
+            "Destination": "/dataVolumeContainer",
+            "Mode": "ro",
+            "RW": false,# 已经切换成只读了
+            "Propagation": "rprivate"
+        }
+    ]
+   ```
+   > DockerFile添加 
