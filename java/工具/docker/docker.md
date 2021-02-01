@@ -10,7 +10,7 @@
    2. 其次就是假如我的java项目需要部署到服务器上，我的java项目只能支持java8，如果服务器上已有java11，则无从下手，
       卸载重装则有可能会影响到服务器上的别的程序，如果不装java8，则无法运行我们的程序，隔离性不强
 2. 构建虚拟机镜像文件，在虚拟机里运行创建出虚拟机
-    1. 他解决了隔离性和一定的跨平台性，但是一台虚拟机创建出来需要模拟整个操作系统，包括硬盘，内存，网络等一系列的操作系统相关的组件
+    1. 他解决了隔离性和一定地跨平台性，但是一台虚拟机创建出来需要模拟整个操作系统，包括硬盘，内存，网络等一系列的操作系统相关的组件
     会很浪费资源
 3. 虚拟容器技术
     1. 他解决了隔离性和跨平台性，他并不像虚拟机一样庞大，硬件驱动相关的与主机共用（主机：正真的电脑，宿机：虚拟出来的），只是环境相关
@@ -18,7 +18,7 @@
        运维拿到镜像则直接使用少量参数则器启动
 ### docker的三要素
 1. 仓库，类似于git服务器、maven中央仓库、百度云盘（不严谨，但好理解）、等，仓库用于存放镜像，我们可以拉取镜像，用来快速创建容器，[docker官方的仓库地址](https://registry.hub.docker.com/)
-2. 镜像，用镜像可以创建出一个或者多个容器，可以认为是一个模板，类似java的类，用类可以创建出对象，比如windows10的安装文件，利用这一个文件可以给无数个电脑安装windows
+2. 镜像，用镜像可以创建出一个或者多个容器，可以认为是一个模板，类似java的类，用类可以创建出对象，比如windows10的安装文件，利用这一个文件可以给无数台电脑安装windows
 3. 容器，利用镜像创建出来的真实运行环境，他是一个虚拟出的一个小型的linux，也是最终运行应用程序的东西
 ## 2.docker常用命令
 ### docker 系统相关
@@ -843,3 +843,345 @@ docker.io/nginx                1.10                0346349a1a64        3 years a
     ]
    ```
    > DockerFile添加 
+   
+   什么是DockerFile
+   
+   DockerFile是对镜像的描述，使用VOLUME 指令,由于在DockerFile内可以指定主机目录的话，
+   则会带来移植性的困扰，即并非所有机器在特定目录都能使用，所以VOLUME会在容器内创建目录,并绑定在主机的目录上默认位置
+   ```shell
+   [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# vim DockerFile
+   [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# cat DockerFile
+   FROM centos
+   VOLUME ["/dataVolumeContainer1", "/dataVolumeContainer2"]
+   CMD echo "finised,-----------success1"
+   CMD /bin/bash
+   ```
+   DockerFile通过build命令可以创建新的容器
+   ```shell
+   [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# docker build -f ./DockerFile -t fenqing/centos02 .
+   Sending build context to Docker daemon 2.048 kB
+   Step 1/4 : FROM centos
+   ---> 300e315adb2f
+   Step 2/4 : VOLUME /dataVolumeContainer1 /dataVolumeContainer2
+   ---> Running in f254d54b257d
+   ---> 492ee80ce787
+   Removing intermediate container f254d54b257d
+   Step 3/4 : CMD echo "finised,-----------success1"
+   ---> Running in 823adfcc500f
+   ---> 66de2f0ba779
+   Removing intermediate container 823adfcc500f
+   Step 4/4 : CMD /bin/bash
+   ---> Running in 7aab1e5390c7
+   ---> 0fdd547f0ecb
+   Removing intermediate container 7aab1e5390c7
+   Successfully built 0fdd547f0ecb
+   [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# docker images
+   REPOSITORY                     TAG                 IMAGE ID            CREATED             SIZE
+   fenqing/centos02               latest              0fdd547f0ecb        42 seconds ago      209 MB
+   fenqing/tomcat02               1.2                 fb29bf1e4ca8        9 hours ago         649 MB
+   docker.io/tomcat               latest              040bdb29ab37        2 weeks ago         649 MB
+   docker.io/centos               latest              300e315adb2f        7 weeks ago         209 MB
+   docker.io/wordpress            latest              cfb931188dab        2 months ago        546 MB
+   docker.io/redis                latest              74d107221092        2 months ago        104 MB
+   docker.io/mysql                5.7.32              1b12f2e9257b        3 months ago        448 MB
+   docker.io/elasticsearch        7.9.3               1ab13f928dc8        3 months ago        742 MB
+   docker.io/nacos/nacos-server   latest              a81222848024        4 months ago        921 MB
+   docker.io/kibana               7.4.2               230d3ded1abc        15 months ago       1.1 GB
+   docker.io/nginx                1.10                0346349a1a64        3 years ago         182 MB
+   ```
+   ```shell
+   [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# docker run -it fenqing/centos02 /bin/bash
+   [root@466677b0f4fc /]# ls
+   bin  dataVolumeContainer1  dataVolumeContainer2  dev  etc  home  lib  lib64  lost+found  media	mnt  opt  proc	root  run  sbin  srv  sys  tmp	usr  var
+   ```
+### 数据卷容器
+命名的容器挂在数据卷，其他容器通过挂在这个父容器，实现数据共享，挂在数据卷的容器，称之为数据卷容器
+
+使用--volume-form 容器id，可以继承同镜像的容器的数据卷，即，父子容器之间共享同一份数据卷，只要还有至少一个容器在使用数据卷，数据卷则一直有效
+```shell
+# 数据卷容器（父容器）
+[root@iZwz9g1c3fleilt56ermd5Z dockerfile]# docker run -it --name fcentos1 fenqing/centos02 /bin/bash
+[root@57f322a82815 /]# cd dataVolumeContainer1
+[root@57f322a82815 dataVolumeContainer1]# vi centos1.txt
+```
+```shell
+# 子容器1
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -it --name fcentos2 --volumes-from fcentos1 fenqing/centos02
+[root@1e224af2be20 /]# cd dataVolumeContainer1/
+[root@1e224af2be20 dataVolumeContainer1]# cat centos1.txt 
+test centos1
+```
+```shell
+# 子容器2
+[root@iZwz9g1c3fleilt56ermd5Z ~]# docker run -it --name fcentos3 --volumes-from fcentos1 fenqing/centos02
+[root@52bcf9601227 /]# cd dataVolumeContainer1/
+[root@52bcf9601227 dataVolumeContainer1]# cat centos1.txt 
+test centos1
+```
+
+### DockerFile
+1. 是什么
+   1. dockerfile 是用来构建docker镜像的构建文件，是由一些列命令和参数构成的脚本
+   2. 构建三步骤
+      1. 手动编写一个dockerfile文件，当然，必须要符合file的规范
+      2. 有这个文件后，直接docker build命令执行，获得一个自定义镜像
+      3. 运行这个容器
+   
+2. docker 过程解析
+   1. Dockerfile 内容基础知识 
+      1. 每条保留字指令都必须为答谢字母且后面要跟随至少一个参数
+      2. 指令按照从上到下，顺序执行
+      3. \#标识注释
+      4. 每条指令都会创建一个新的镜像层，并对镜像进行提交
+   2. dockerfile 的大致流程
+      1. docker从基础镜像运行一个容器
+      2. 执行一条指令并对容器做出修改
+      3. 执行类似docker commit的操作提交一个新的镜像层
+      4. docker 在基于刚提交的镜像运行一个新容器
+      5. 执行dockerfile中的下一条指令直到所有指令都执行完成
+   
+   3. 小总结
+      从应用软件的角度来看，Dockerfile，docker镜像与docker容器分别代表软件的三个不同阶段
+      1. Dockerfile是软件的原材料
+      2. docker镜像是软件的交付品
+      3. docker容器则可以认为是软件的运行态
+      
+      dockerfile面向开发，docker镜像成为交付标准，docker容器则设计部署与运营，三者缺一不可，合力充当docker体系的基石
+   
+3. DockerFile体系结构
+1. FROM 基础镜像，当前新镜像是基于哪个镜像
+2. MAINTAINER 镜像维护的姓名和邮箱地址
+3. RUN 容器构建时需要运行的命令
+4. EXPOSE 当前容器对外暴露出的端口
+5. WORKDIR 指定在创建容器后，终端默认登陆的进来工作目录，一个落脚点
+6. ENV 用来构建镜像过程中设置环境变量
+7. ADD 将主机目录下的文件拷贝进镜像，且ADD命令会自动处理URL和解压tar压缩包
+8. COPY 类似ADD，拷贝文件和目录到镜像中，将从构建上下文目录中<源路径>的文件或
+   者目录复制到新的一层镜像内<目标路径>位置， COPY src desc 或者 COPY ["src", "desc"]
+   
+9. VOLUME 容器数据卷，用于数据保存和持久化工作
+10. CMD 指定一个容器时，要运行的命令， CMD <命令> 或者 CMD ["可执行文件", "参数1", "参数2",...]
+    1. Dockerfile中可以有多个CMD命令，但只有最后一个生效，CMD会被docker run 之后的参数替换
+11. ENTRYPOINT 指定一个容器启动时要运行的命令
+    1. ENTRYPOINT 的目的和CMD一样，都是在指定容器启动程序及参数
+12. ONBUILD 当构建一个被继承的Dockerfile时运行命令，父镜像在被子继承后父镜像的onbuild被触发
+
+总结
+    
+|build        |both   |run       |
+|-------------|-------|----------|
+|FROM         |WORKDIR|CMD       |
+|MAINTAINER   |USER   |ENV       |
+|COPY         |       |EXPOSE    |
+|ADD          |       |VOLUME    |
+|RUN          |       |ENTRYPOINT|
+|ONBUILD      |       |          |
+|.dockerignore|       |          |
+
+### 案例
+1. Base镜像（scratch）
+   1. Docker hub 中99%的镜像都是通过在base镜像中安装和配置需要的软件构建出来的
+   
+2. 自定义镜像 mycentos 
+   1. 编写
+      1. hub默认centos镜像什么情况
+      ```shell
+      FROM scratch
+      ADD centos-7-x86_64-docker.tar.xz /
+      
+      LABEL \
+      org.label-schema.schema-version="1.0" \
+      org.label-schema.name="CentOS Base Image" \
+      org.label-schema.vendor="CentOS" \
+      org.label-schema.license="GPLv2" \
+      org.label-schema.build-date="20201113" \
+      org.opencontainers.image.title="CentOS Base Image" \
+      org.opencontainers.image.vendor="CentOS" \
+      org.opencontainers.image.licenses="GPL-2.0-only" \
+      org.opencontainers.image.created="2020-11-13 00:00:00+00:00"
+      
+      CMD ["/bin/bash"]
+      ```
+      
+   2. 官方centos不支持vim与ifconfig，并且登录到终端默认在/路径，现在自定义镜像将其扩展
+   
+   dockerfile: 
+   
+      ```shell
+      FROM centos
+   
+      MAINTAINER fenqing<1286976336@qq.com>
+      ENV MYPATH /usr/local
+      WORKDIR $MYPATH
+      
+      RUN yum -y install vim
+      
+      RUN yum -y install net-tools
+      
+      EXPOSE 80
+      CMD echo $MYPATH
+      CMD echo "success----------ok"
+      CMD /bin/bash
+      ```   
+   build:
+      ```shell
+      [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# docker build -f ./Dockerfile2 -t fenqing/centos03:1.0 .
+      Sending build context to Docker daemon 3.072 kB
+      Step 1/10 : FROM centos
+      ---> 300e315adb2f
+      Step 2/10 : MAINTAINER fenqing<1286976336@qq.com>
+      ---> Running in 0cae220909a2
+      ---> ded525754bcd
+      Removing intermediate container 0cae220909a2
+      Step 3/10 : ENV MYPATH /usr/local
+      ---> Running in b362f6a29ee9
+      ---> 3b19fce3e503
+      Removing intermediate container b362f6a29ee9
+      Step 4/10 : WORKDIR $MYPATH
+      ---> d2cafdd90697
+      Removing intermediate container deac86def4f9
+      Step 5/10 : RUN yum -y install vim
+      ---> Running in e0d0a4ea5bfc
+      
+      CentOS Linux 8 - AppStream                      665 kB/s | 6.3 MB     00:09    
+      CentOS Linux 8 - BaseOS                         282 kB/s | 2.3 MB     00:08    
+      CentOS Linux 8 - Extras                         4.7 kB/s | 8.6 kB     00:01    
+      Dependencies resolved.
+      ================================================================================
+      Package             Arch        Version                   Repository      Size
+      ================================================================================
+      Installing:
+      vim-enhanced        x86_64      2:8.0.1763-15.el8         appstream      1.4 M
+      Installing dependencies:
+      gpm-libs            x86_64      1.20.7-15.el8             appstream       39 k
+      vim-common          x86_64      2:8.0.1763-15.el8         appstream      6.3 M
+      vim-filesystem      noarch      2:8.0.1763-15.el8         appstream       48 k
+      which               x86_64      2.21-12.el8               baseos          49 k
+      
+      Transaction Summary
+      ================================================================================
+      Install  5 Packages
+      
+      Total download size: 7.8 M
+      Installed size: 30 M
+      Downloading Packages:
+      (1/5): gpm-libs-1.20.7-15.el8.x86_64.rpm         62 kB/s |  39 kB     00:00    
+      (2/5): vim-filesystem-8.0.1763-15.el8.noarch.rp 232 kB/s |  48 kB     00:00    
+      (3/5): which-2.21-12.el8.x86_64.rpm              74 kB/s |  49 kB     00:00    
+      (4/5): vim-enhanced-8.0.1763-15.el8.x86_64.rpm   78 kB/s | 1.4 MB     00:17    
+      (5/5): vim-common-8.0.1763-15.el8.x86_64.rpm    266 kB/s | 6.3 MB     00:24
+      --------------------------------------------------------------------------------
+      Total                                           317 kB/s | 7.8 MB     00:25     
+      warning: /var/cache/dnf/appstream-02e86d1c976ab532/packages/gpm-libs-1.20.7-15.el8.x86_64.rpm: Header V3 RSA/SHA256 Signature, key ID 8483c65d: NOKEY
+      CentOS Linux 8 - AppStream                      1.6 MB/s | 1.6 kB     00:00    
+      Importing GPG key 0x8483C65D:
+      Userid     : "CentOS (CentOS Official Signing Key) <security@centos.org>"
+      Fingerprint: 99DB 70FA E1D7 CE22 7FB6 4882 05B5 55B3 8483 C65D
+      From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+      Key imported successfully
+      Running transaction check
+      Transaction check succeeded.
+      Running transaction test
+      Transaction test succeeded.
+      Running transaction
+      Preparing        :                                                        1/1
+      Installing       : which-2.21-12.el8.x86_64                               1/5
+      Installing       : vim-filesystem-2:8.0.1763-15.el8.noarch                2/5
+      Installing       : vim-common-2:8.0.1763-15.el8.x86_64                    3/5
+      Installing       : gpm-libs-1.20.7-15.el8.x86_64                          4/5
+      Running scriptlet: gpm-libs-1.20.7-15.el8.x86_64                          4/5
+      Installing       : vim-enhanced-2:8.0.1763-15.el8.x86_64                  5/5
+      Running scriptlet: vim-enhanced-2:8.0.1763-15.el8.x86_64                  5/5
+      Running scriptlet: vim-common-2:8.0.1763-15.el8.x86_64                    5/5
+      Verifying        : gpm-libs-1.20.7-15.el8.x86_64                          1/5
+      Verifying        : vim-common-2:8.0.1763-15.el8.x86_64                    2/5
+      Verifying        : vim-enhanced-2:8.0.1763-15.el8.x86_64                  3/5
+      Verifying        : vim-filesystem-2:8.0.1763-15.el8.noarch                4/5
+      Verifying        : which-2.21-12.el8.x86_64                               5/5
+      
+      Installed:
+      gpm-libs-1.20.7-15.el8.x86_64         vim-common-2:8.0.1763-15.el8.x86_64    
+      vim-enhanced-2:8.0.1763-15.el8.x86_64 vim-filesystem-2:8.0.1763-15.el8.noarch
+      which-2.21-12.el8.x86_64
+      
+      Complete!
+      ---> dbf17b793d8b
+      Removing intermediate container e0d0a4ea5bfc
+      Step 6/10 : RUN yum -y install net-tools
+      ---> Running in c96260bf2978
+      
+      Last metadata expiration check: 0:00:33 ago on Mon Feb  1 09:43:22 2021.
+      Dependencies resolved.
+      ================================================================================
+      Package         Architecture Version                        Repository    Size
+      ================================================================================
+      Installing:
+      net-tools       x86_64       2.0-0.52.20160912git.el8       baseos       322 k
+      
+      Transaction Summary
+      ================================================================================
+      Install  1 Package
+      
+      Total download size: 322 k
+      Installed size: 942 k
+      Downloading Packages:
+      net-tools-2.0-0.52.20160912git.el8.x86_64.rpm    96 kB/s | 322 kB     00:03
+      --------------------------------------------------------------------------------
+      Total                                            85 kB/s | 322 kB     00:03     
+      Running transaction check
+      Transaction check succeeded.
+      Running transaction test
+      Transaction test succeeded.
+      Running transaction
+      Preparing        :                                                        1/1
+      Installing       : net-tools-2.0-0.52.20160912git.el8.x86_64              1/1
+      Running scriptlet: net-tools-2.0-0.52.20160912git.el8.x86_64              1/1
+      Verifying        : net-tools-2.0-0.52.20160912git.el8.x86_64              1/1
+      
+      Installed:
+      net-tools-2.0-0.52.20160912git.el8.x86_64
+      
+      Complete!
+      ---> 6e22d2b69cdb
+      Removing intermediate container c96260bf2978
+      Step 7/10 : EXPOSE 80
+      ---> Running in c54a10544eaf
+      ---> 42063eff3009
+      Removing intermediate container c54a10544eaf
+      Step 8/10 : CMD echo $MYPATH
+      ---> Running in 0abd9d8cc74e
+      ---> c2ac718dd9e7
+      Removing intermediate container 0abd9d8cc74e
+      Step 9/10 : CMD echo "success----------ok"
+      ---> Running in 5c62bebe3f8d
+      ---> 24050d240b42
+      Removing intermediate container 5c62bebe3f8d
+      Step 10/10 : CMD /bin/bash
+      ---> Running in 47974823d8c5
+      ---> dcfd11f63ab1
+      Removing intermediate container 47974823d8c5
+      Successfully built dcfd11f63ab1
+      ```
+   
+   3. 运行 docker run -it 新镜像名称:tag
+   4. 列出镜像的变更历史
+      1. docker history 镜像名
+         ```shell
+         [root@iZwz9g1c3fleilt56ermd5Z dockerfile]# docker history fenqing/centos03:1.0
+         IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+         dcfd11f63ab1        8 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "/b...   0 B                 
+         24050d240b42        8 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "ec...   0 B                 
+         c2ac718dd9e7        8 minutes ago       /bin/sh -c #(nop)  CMD ["/bin/sh" "-c" "ec...   0 B                 
+         42063eff3009        8 minutes ago       /bin/sh -c #(nop)  EXPOSE 80/tcp                0 B                 
+         6e22d2b69cdb        8 minutes ago       /bin/sh -c yum -y install net-tools             23.4 MB             
+         dbf17b793d8b        8 minutes ago       /bin/sh -c yum -y install vim                   58.1 MB             
+         d2cafdd90697        9 minutes ago       /bin/sh -c #(nop) WORKDIR /usr/local            0 B                 
+         3b19fce3e503        9 minutes ago       /bin/sh -c #(nop)  ENV MYPATH=/usr/local        0 B                 
+         ded525754bcd        9 minutes ago       /bin/sh -c #(nop)  MAINTAINER fenqing<1286...   0 B                 
+         300e315adb2f        7 weeks ago         /bin/sh -c #(nop)  CMD ["/bin/bash"]            0 B                 
+         <missing>           7 weeks ago         /bin/sh -c #(nop)  LABEL org.label-schema....   0 B                 
+         <missing>           7 weeks ago         /bin/sh -c #(nop) ADD file:bd7a2aed6ede423...   209 MB
+         ```
+         
+
+26集
