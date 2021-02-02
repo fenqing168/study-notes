@@ -1184,4 +1184,7 @@ test centos1
          ```
          
 
-26集
+3. CMD和ENTPYPOINT案例
+   1. CMD
+      1. CMD可以允许有多个，但则只会生效最后一个，docker run 命令追加的命令相当于会追加到最后
+      2. 
