@@ -929,7 +929,7 @@ test centos1
    
 2. docker 过程解析
    1. Dockerfile 内容基础知识 
-      1. 每条保留字指令都必须为答谢字母且后面要跟随至少一个参数
+      1. 每条保留字指令都必须为大写字母且后面要跟随至少一个参数
       2. 指令按照从上到下，顺序执行
       3. \#标识注释
       4. 每条指令都会创建一个新的镜像层，并对镜像进行提交
@@ -1182,6 +1182,144 @@ test centos1
          <missing>           7 weeks ago         /bin/sh -c #(nop)  LABEL org.label-schema....   0 B                 
          <missing>           7 weeks ago         /bin/sh -c #(nop) ADD file:bd7a2aed6ede423...   209 MB
          ```
-         
+   
+### CMD/ENTRYPOINT 案例
+1. CMD 可以有多个，但只有最后一个生效
+   1. 小案例，安装curl，利用cmd 执行curl访问ip.com网址
+   ```shell
+   # Dockerfile
+   FROM centos:7.9.2009
+   RUN yum install -y curl
+   CMD ["curl", "-s", "http://ip.cn"]
+   ```
+   如果需要加参数，例如在curl前加 -i参数
+1. ENTRYPOINT 
+   1. 使用ENTRYPOINT则可以实现，
+      ```shell
+      [root@localhost dockerfile]# cat Dockerfile2
+      FROM centos:7.9.2009
+      RUN yum install -y curl
+      ENTRYPOINT ["curl", "-s", "http://ip.cn"]
+      ```
+      ```shell
+      [root@localhost dockerfile]# docker build -f ./Dockerfile2 -t myip2 .
+      Sending build context to Docker daemon  3.072kB
+      Step 1/3 : FROM centos:7.9.2009
+      ---> 8652b9f0cb4c
+      Step 2/3 : RUN yum install -y curl
+      ---> Using cache
+      ---> 2a29b7609867
+      Step 3/3 : ENTRYPOINT ["curl", "-s", "http://ip.cn"]
+      ---> Running in b8136ad53fc2
+      Removing intermediate container b8136ad53fc2
+      ---> 7b1d383c574e
+      Successfully built 7b1d383c574e
+      Successfully tagged myip2:latest
+      ```
+      在run镜像后，可以额外传参数，他不会覆盖原有的命令，而是以追加参数的形式执行
+      ```shell
+      [root@localhost dockerfile]# docker run myip2 -i
+      HTTP/1.1 301 Moved Permanently
+      Date: Tue, 02 Feb 2021 17:30:52 GMT
+      Transfer-Encoding: chunked
+      Connection: keep-alive
+      Cache-Control: max-age=3600
+      Expires: Tue, 02 Feb 2021 18:30:52 GMT
+      Location: https://ip.cn/
+      cf-request-id: 08056524480000e7fd4a2f4000000001
+      Report-To: {"max_age":604800,"endpoints":[{"url":"https:\/\/a.nel.cloudflare.com\/report?s=eBvqoA03H2GNWH4yF75BDwO%2BsMTrum8JLYyb2te9CIGfQEl38O6eK3AL8YZYZV00uqKp4iISWnEBnbTkjqHxk6YXkOZDpA%3D%3D"}],"group":"cf-nel"}
+      NEL: {"max_age":604800,"report_to":"cf-nel"}
+      Server: cloudflare
+      CF-RAY: 61b5a4807fede7fd-LAX
+      alt-svc: h3-27=":443"; ma=86400, h3-28=":443"; ma=86400, h3-29=":443"; ma=86400
+      ```
+   
+### ONBUILD 案例
+ONBUILD 如果自己被当做基础镜像的话，则会执行
+Dockerfile 基础镜像
+```shell
+[root@localhost dockerfile]# cat Dockerfile2
+FROM centos:7.9.2009
+RUN yum install -y curl
+ENTRYPOINT ["curl", "-s", "http://ip.cn"]
+ONBUILD RUN echo "father onbuild-------886"
+```
+build 
+```shell
+[root@localhost dockerfile]# docker build -f ./Dockerfile2 -t myip3 .
+Sending build context to Docker daemon  3.072kB
+Step 1/4 : FROM centos:7.9.2009
+ ---> 8652b9f0cb4c
+Step 2/4 : RUN yum install -y curl
+ ---> Using cache
+ ---> 2a29b7609867
+Step 3/4 : ENTRYPOINT ["curl", "-s", "http://ip.cn"]
+ ---> Using cache
+ ---> 7b1d383c574e
+Step 4/4 : ONBUILD RUN echo "father onbuild-------886"
+ ---> Running in 31370a385936
+Removing intermediate container 31370a385936
+ ---> 4d63fd8adaf0
+Successfully built 4d63fd8adaf0
+Successfully tagged myip3:latest
+```
+继承镜像Dockerfile
+```shell
+[root@localhost dockerfile]# cat Dockerfile3
+FROM myip3
+RUN yum install -y curl
+ENTRYPOINT ["curl", "-s", "http://ip.cn"]
+```
+build 
+```shell
+[root@localhost dockerfile]# docker build -f ./Dockerfile3 -t myip4 .
+Sending build context to Docker daemon  4.096kB
+Step 1/3 : FROM myip3
+# Executing 1 build trigger
+ ---> Running in b2b291608afa
+father onbuild-------886
+Removing intermediate container b2b291608afa
+ ---> 0148a4a2e330
+Step 2/3 : RUN yum install -y curl
+ ---> Running in 04d9362298f8
+Loaded plugins: fastestmirror, ovl
+Loading mirror speeds from cached hostfile
+ * base: mirrors.neusoft.edu.cn
+ * extras: mirrors.neusoft.edu.cn
+ * updates: mirror.bit.edu.cn
+Package curl-7.29.0-59.el7_9.1.x86_64 already installed and latest version
+Nothing to do
+Removing intermediate container 04d9362298f8
+ ---> 338da1dbe843
+Step 3/3 : ENTRYPOINT ["curl", "-s", "http://ip.cn"]
+ ---> Running in e8e7a3c15eef
+Removing intermediate container e8e7a3c15eef
+ ---> dc43b252dac6
+Successfully built dc43b252dac6
+Successfully tagged myip4:latest
+```
+确实执行了父镜像的 (打印出"father onbuild-------886"）
 
-26集
+### 自定义tomcat
+准备好jdk和tomcat，设置相关环境变量，以及最后运行，以下是Dockerfile
+```shell
+[root@localhost tomcat]# cat Dockerfile 
+[root@localhost tomcat]# cat Dockerfile 
+FROM centos:7.9.2009
+MAINTAINER fenqing<1286976336@qq.com>
+COPY c.txt /usr/local/cincontainer.txt
+ADD jdk-8u281-linux-x64.tar.gz /usr/local/
+ADD apache-tomcat-9.0.41.tar.gz /usr/local/
+RUN yum -y install vim
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+ENV JAVA_HOME /usr/local/jdk1.8.0_281
+ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+ENV CATALINA_HOME /usr/local/apache-tomcat-9.0.41
+ENV CATALINA_BASE $CATALINA_HOME
+ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
+EXPOSE 8080
+CMD /usr/local/apache-tomcat-9.0.41/bin/startup.sh && tail -f /usr/local/apache-tomcat-9.0.41/logs/catalina.out
+```
+
+29集
