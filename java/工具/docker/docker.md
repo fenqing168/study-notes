@@ -949,22 +949,22 @@ test centos1
       dockerfile面向开发，docker镜像成为交付标准，docker容器则设计部署与运营，三者缺一不可，合力充当docker体系的基石
    
 3. DockerFile体系结构
-1. FROM 基础镜像，当前新镜像是基于哪个镜像
-2. MAINTAINER 镜像维护的姓名和邮箱地址
-3. RUN 容器构建时需要运行的命令
-4. EXPOSE 当前容器对外暴露出的端口
-5. WORKDIR 指定在创建容器后，终端默认登陆的进来工作目录，一个落脚点
-6. ENV 用来构建镜像过程中设置环境变量
-7. ADD 将主机目录下的文件拷贝进镜像，且ADD命令会自动处理URL和解压tar压缩包
-8. COPY 类似ADD，拷贝文件和目录到镜像中，将从构建上下文目录中<源路径>的文件或
-   者目录复制到新的一层镜像内<目标路径>位置， COPY src desc 或者 COPY ["src", "desc"]
-   
-9. VOLUME 容器数据卷，用于数据保存和持久化工作
-10. CMD 指定一个容器时，要运行的命令， CMD <命令> 或者 CMD ["可执行文件", "参数1", "参数2",...]
-    1. Dockerfile中可以有多个CMD命令，但只有最后一个生效，CMD会被docker run 之后的参数替换
-11. ENTRYPOINT 指定一个容器启动时要运行的命令
-    1. ENTRYPOINT 的目的和CMD一样，都是在指定容器启动程序及参数
-12. ONBUILD 当构建一个被继承的Dockerfile时运行命令，父镜像在被子继承后父镜像的onbuild被触发
+   1. FROM 基础镜像，当前新镜像是基于哪个镜像
+   2. MAINTAINER 镜像维护的姓名和邮箱地址
+   3. RUN 容器构建时需要运行的命令
+   4. EXPOSE 当前容器对外暴露出的端口
+   5. WORKDIR 指定在创建容器后，终端默认登陆的进来工作目录，一个落脚点
+   6. ENV 用来构建镜像过程中设置环境变量
+   7. ADD 将主机目录下的文件拷贝进镜像，且ADD命令会自动处理URL和解压tar压缩包
+   8. COPY 类似ADD，拷贝文件和目录到镜像中，将从构建上下文目录中<源路径>的文件或
+      者目录复制到新的一层镜像内<目标路径>位置， COPY src desc 或者 COPY ["src", "desc"]
+      
+   9. VOLUME 容器数据卷，用于数据保存和持久化工作
+   10. CMD 指定一个容器时，要运行的命令， CMD <命令> 或者 CMD ["可执行文件", "参数1", "参数2",...]
+       1. Dockerfile中可以有多个CMD命令，但只有最后一个生效，CMD会被docker run 之后的参数替换
+   11. ENTRYPOINT 指定一个容器启动时要运行的命令
+       1. ENTRYPOINT 的目的和CMD一样，都是在指定容器启动程序及参数
+   12. ONBUILD 当构建一个被继承的Dockerfile时运行命令，父镜像在被子继承后父镜像的onbuild被触发
 
 总结
     
@@ -1321,5 +1321,3 @@ ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
 EXPOSE 8080
 CMD /usr/local/apache-tomcat-9.0.41/bin/startup.sh && tail -f /usr/local/apache-tomcat-9.0.41/logs/catalina.out
 ```
-
-29集
